@@ -19,3 +19,12 @@ Build a CI/CD pipeline using:
 ## Pipeline
 
 GitHub -> Jenkins -> Build -> Test -> Deploy
+
+## Branch Strategy
+
+- main (protected)
+- blaina
+- junior
+- loriana
+- lucie
+- yorgo-haykal
