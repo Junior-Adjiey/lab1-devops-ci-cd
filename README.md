@@ -106,6 +106,17 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ---
 
+## Web Application
+
+The calculator can be accessed through a web browser:
+
+http://localhost:3000
+
+Example:
+
+2+3*4 = 14
+
+---
 ## CI Pipeline
 
 The Jenkins pipeline performs:
