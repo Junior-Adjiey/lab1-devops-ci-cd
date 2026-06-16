@@ -1,12 +1,15 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'node20'
+    }
+
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'junior',
-                    url: 'https://github.com/Junior-Adjiey/lab1-devops-ci-cd.git'
+                checkout scm
             }
         }
 

@@ -4,7 +4,7 @@
 Vagrant.configure("2") do |config|
 
   # Ubuntu 22.04 LTS
-  config.vm.box = "ubuntu/jammy64"
+  config.vm.box = "bento/ubuntu-22.04"
 
   # Nom de la machine virtuelle
   config.vm.hostname = "jenkins-server"
