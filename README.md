@@ -106,6 +106,20 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ---
 
+## CI Pipeline
+
+The Jenkins pipeline performs:
+
+1. Checkout source code from GitHub
+2. Install Node.js dependencies
+3. Run automated tests
+
+Pipeline stages:
+- Checkout
+- Install Dependencies
+- Run Tests
+
+---
 ## Team Members
 
 - Blaina NIANGI-KIAYUKUA
