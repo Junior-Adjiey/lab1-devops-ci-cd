@@ -12,6 +12,9 @@ Vagrant.configure("2") do |config|
   # Port Jenkins
   config.vm.network "forwarded_port", guest: 8080, host: 8080
 
+  # Application Calculator
+  config.vm.network "forwarded_port", guest: 3000, host: 3000
+
   # Port SSH
   config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh"
 

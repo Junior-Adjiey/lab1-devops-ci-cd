@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Calculator</title>
+</head>
+<body>
+
+<h1>Smart Calculator</h1>
+
+<input id="expression" placeholder="2+3*4">
+<button onclick="calculate()">Calculate</button>
+
+<h2 id="result"></h2>
+
+<script>
+async function calculate() {
+
+    const expression =
+        document.getElementById("expression").value;
+
+    const response =
+        await fetch(`/calculate?expression=${encodeURIComponent(expression)}`);
+
+    const data = await response.json();
+
+    document.getElementById("result").innerText =
+        data.result;
+}
+</script>
+
+</body>
+</html>
