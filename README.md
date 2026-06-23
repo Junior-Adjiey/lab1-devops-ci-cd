@@ -1,4 +1,4 @@
-# Lab 1 & Lab 2 - CI/CD Pipeline and Docker Containerization
+# DevOps Labs - CI/CD Pipeline, Docker Containerization and Ansible Automation
 
 ## Objective
 
@@ -11,30 +11,31 @@ The objective of these labs is to build a complete DevOps environment using:
 * Jenkins
 * Docker
 * Docker Hub
+* Ansible
 
-The project demonstrates Continuous Integration and Continuous Deployment (CI/CD) through Jenkins and Docker.
+The project demonstrates Continuous Integration (CI), Continuous Deployment (CD), and Infrastructure Automation.
 
 ---
 
-# Architecture
+# Global Architecture
 
 Developer
 ↓
 GitHub Repository
 ↓
-Jenkins VM
+Jenkins VM (192.168.56.10)
 ↓
-Build
+CI/CD Pipeline
 ↓
-Test
+Docker Remote API
 ↓
-Docker Build
-↓
-Docker Hub
-↓
-Deploy
-↓
-Docker Server
+Docker VM (192.168.56.11)
+
+├── build-agent (temporary)
+
+├── calculator-prod (production)
+
+└── nginx (managed by Ansible)
 
 ---
 
@@ -44,23 +45,23 @@ The repository uses a feature branch workflow.
 
 ## Main Branch
 
-* `main`
+* main
 * Protected branch
 * Pull Requests required before merging
 
 ## Team Branches
 
-* `blaina`
-* `junior`
-* `loriana`
-* `lucie`
-* `yorgo-haykal`
+* blaina
+* junior
+* loriana
+* lucie
+* yorgo-haykal
 
-Each member works on their own branch and submits Pull Requests before merging into `main`.
+Each member works on their own branch and submits Pull Requests before merging into main.
 
 ---
 
-# Lab 1 - Jenkins CI Pipeline
+# Lab 1 - Jenkins Continuous Integration
 
 ## Virtual Environment
 
@@ -105,7 +106,7 @@ The Jenkins VM automatically installs:
 
 ---
 
-## Jenkins
+## Jenkins Access
 
 Jenkins is accessible through:
 
@@ -113,7 +114,7 @@ Jenkins is accessible through:
 http://localhost:8080
 ```
 
-To retrieve the initial administrator password:
+Retrieve the initial administrator password:
 
 ```bash
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
@@ -139,7 +140,7 @@ The Jenkins pipeline performs:
 
 ## Calculator Application
 
-The calculator can be accessed through:
+The calculator application can be accessed through:
 
 ```text
 http://localhost:3000
@@ -153,7 +154,7 @@ Example:
 
 ---
 
-# Lab 2 - Docker Containerization
+# Lab 2 - Docker Containerization and Deployment
 
 ## Objective
 
@@ -307,7 +308,7 @@ juninhoh/calculator-app:v1
 
 # Docker Remote API
 
-The Docker server exposes a Remote API allowing Jenkins to manage containers remotely.
+Docker exposes a Remote API that allows Jenkins to manage containers remotely.
 
 Docker Server:
 
@@ -356,9 +357,9 @@ This integration allows Jenkins to:
 
 # Dynamic Build Agent
 
-When a pipeline is executed, Jenkins creates a temporary Docker container on the Docker server.
+When a pipeline is executed, Jenkins creates a temporary Docker container.
 
-Example request:
+Example:
 
 ```bash
 curl -X POST \
@@ -370,7 +371,7 @@ curl -X POST \
 http://192.168.56.11:2375/containers/create?name=build-agent
 ```
 
-The container is automatically deleted when the pipeline finishes.
+The container is automatically deleted after the build.
 
 ---
 
@@ -400,9 +401,157 @@ curl http://localhost:3001
 
 ---
 
-# Final Jenkins Pipeline
+# Lab 3 - Configuration Management with Ansible
 
-The final Jenkins pipeline contains the following stages:
+## Objective
+
+The objective of Lab 3 is to automate server configuration and service deployment using Ansible.
+
+The Jenkins server acts as the Ansible Control Node and manages the Docker server remotely through SSH.
+
+---
+
+## Ansible Architecture
+
+Jenkins Server (Control Node)
+↓
+Ansible
+↓
+SSH
+↓
+Docker Server (Managed Node)
+
+---
+
+## Inventory
+
+Inventory file:
+
+```ini
+[docker]
+192.168.56.11 ansible_user=vagrant
+```
+
+Verify connectivity:
+
+```bash
+ansible all -i inventory -m ping
+```
+
+Expected result:
+
+```text
+pong
+```
+
+---
+
+## Package Management
+
+### Install Package
+
+Playbook:
+
+```yaml
+---
+- name: Install system package
+  hosts: docker
+  become: yes
+
+  tasks:
+    - name: Install htop
+      apt:
+        name: htop
+        state: present
+        update_cache: yes
+```
+
+Execution:
+
+```bash
+ansible-playbook -i inventory install_package.yml
+```
+
+---
+
+### Remove Package Using Tags
+
+```bash
+ansible-playbook -i inventory package_management.yml --tags remove
+```
+
+---
+
+## Nginx Deployment
+
+Playbook:
+
+```yaml
+---
+- name: Install Nginx
+  hosts: docker
+  become: yes
+
+  tasks:
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+```
+
+Deploy:
+
+```bash
+ansible-playbook -i inventory nginx.yml
+```
+
+Verification:
+
+```bash
+systemctl status nginx
+```
+
+```bash
+curl localhost
+```
+
+Expected output:
+
+```text
+Welcome to nginx!
+```
+
+---
+
+# Jenkins and Ansible Integration
+
+The Jenkins pipeline automatically executes an Ansible playbook during deployment.
+
+Added pipeline stage:
+
+```groovy
+stage('Run Ansible Playbook') {
+    steps {
+        sh '''
+        ansible-playbook \
+        -i ansible/inventory \
+        ansible/nginx.yml
+        '''
+    }
+}
+```
+
+---
+
+# Final Jenkins Pipeline
 
 1. Checkout
 2. Install Dependencies
@@ -410,7 +559,8 @@ The final Jenkins pipeline contains the following stages:
 4. Docker Remote API
 5. Create Build Container
 6. Deploy Application
-7. Delete Build Container
+7. Run Ansible Playbook
+8. Delete Build Container
 
 ---
 
@@ -424,8 +574,10 @@ When a build is triggered:
 4. Jenkins connects to Docker through the Remote API.
 5. A temporary build-agent container is created.
 6. The application is deployed as calculator-prod.
-7. The build-agent container is removed.
-8. The production container remains running.
+7. Ansible configures the Docker server.
+8. Nginx is verified and started.
+9. The build-agent container is removed.
+10. The production container remains running.
 
 ---
 
@@ -439,71 +591,42 @@ Jenkins VM (192.168.56.10)
 ↓
 Pipeline Execution
 ↓
-Docker Remote API
+Docker Remote API + Ansible
 ↓
 Docker VM (192.168.56.11)
 
 ├── build-agent (temporary)
 
-└── calculator-prod (production)
+├── calculator-prod (production)
 
----
-
-# Useful Docker Commands
-
-## List Images
-
-```bash
-docker images
-```
-
-## List Running Containers
-
-```bash
-docker ps
-```
-
-## List All Containers
-
-```bash
-docker ps -a
-```
-
-## Stop a Container
-
-```bash
-docker stop calculator
-```
-
-## Remove a Container
-
-```bash
-docker rm calculator
-```
-
-## Remove an Image
-
-```bash
-docker rmi calculator-app:v5
-```
+└── nginx (managed automatically)
 
 ---
 
 # Results
 
-The CI/CD pipeline successfully:
+The complete DevOps platform successfully provides:
 
-* Builds the application
-* Executes automated tests
-* Creates Docker build agents dynamically
-* Deploys the application automatically
-* Removes temporary containers
-* Leaves the production application running
+* Continuous Integration with Jenkins
+* Automated Testing
+* Docker Containerization
+* Docker Remote API Management
+* Dynamic Build Agents
+* Automated Deployment
+* Configuration Management with Ansible
+* Automated Nginx Deployment
+* Infrastructure Automation
 
-Production URL:
+Production Application:
 
 ```text
 http://192.168.56.11:3001
+```
+
+Nginx Service:
+
+```text
+http://192.168.56.11
 ```
 
 ---
