@@ -1,33 +1,53 @@
 pipeline {
 
-    agent {
-        docker {
-            image 'node:22'
-        }
-    }
+    agent none
 
     stages {
 
-        stage('Checkout') {
+        stage('Build & Test') {
+
+            agent {
+                docker {
+                    image 'node:22'
+                }
+            }
+
             steps {
+
                 git branch: 'main',
                     url: 'https://github.com/Junior-Adjiey/lab1-devops-ci-cd.git'
-            }
-        }
 
-        stage('Install Dependencies') {
-            steps {
                 dir('app/calculator') {
                     sh 'npm install'
+                    sh 'npm test'
                 }
             }
         }
 
-        stage('Run Tests') {
+        stage('Build Docker Image') {
+
+            agent any
+
             steps {
+
                 dir('app/calculator') {
-                    sh 'npm test'
+
+                    sh '''
+                    docker build \
+                    -t calculator-app:${BUILD_NUMBER} .
+                    '''
+
                 }
+            }
+        }
+
+        stage('List Images') {
+
+            agent any
+
+            steps {
+
+                sh 'docker images'
             }
         }
     }
