@@ -2,7 +2,7 @@
 
 ## Objective
 
-The objective of these labs is to build a complete DevOps environment using:
+The objective of these labs is to build a complete DevOps platform using:
 
 * Vagrant
 * VirtualBox
@@ -13,29 +13,54 @@ The objective of these labs is to build a complete DevOps environment using:
 * Docker Hub
 * Ansible
 
-The project demonstrates Continuous Integration (CI), Continuous Deployment (CD), and Infrastructure Automation.
+The project demonstrates:
+
+* Continuous Integration (CI)
+* Continuous Deployment (CD)
+* Infrastructure Automation
+* Docker-based Build Environments
 
 ---
 
 # Global Architecture
 
 Developer
+
 ↓
+
 GitHub Repository
+
 ↓
+
 Jenkins VM (192.168.56.10)
-↓
-CI/CD Pipeline
-↓
-Docker Remote API
-↓
-Docker VM (192.168.56.11)
 
-├── build-agent (temporary)
+↓
 
-├── calculator-prod (production)
+Docker Agent (node:22)
 
-└── nginx (managed by Ansible)
+↓
+
+Build & Test
+
+↓
+
+Docker Build
+
+↓
+
+Docker Hub
+
+↓
+
+Ansible Deployment
+
+↓
+
+Docker Server (192.168.56.11)
+
+├── calculator-prod
+
+└── nginx
 
 ---
 
@@ -103,6 +128,7 @@ The Jenkins VM automatically installs:
 * Wget
 * Net-tools
 * Jenkins
+* Docker
 
 ---
 
@@ -122,60 +148,76 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ---
 
-## Continuous Integration Pipeline
+# Docker Build Agent
 
-The Jenkins pipeline performs:
+The Build & Test stage is executed inside a temporary Docker container.
 
-1. Checkout source code from GitHub
-2. Install Node.js dependencies
-3. Run automated tests
+Docker image used:
 
-### Pipeline Stages
+```text
+node:22
+```
 
-* Checkout
-* Install Dependencies
-* Run Tests
+For every pipeline execution:
+
+1. Jenkins creates a temporary container
+2. npm install is executed
+3. npm test is executed
+4. The container is automatically removed
+
+This guarantees a clean and reproducible build environment.
 
 ---
 
-## Calculator Application
+# Continuous Integration
 
-The calculator application can be accessed through:
+The CI pipeline performs:
 
-```text
-http://localhost:3000
+1. Checkout source code
+2. Install dependencies
+3. Run automated tests
+
+Example:
+
+```bash
+npm install
+npm test
 ```
+
+---
+
+# Calculator Application
+
+The application provides a simple calculator interface.
 
 Example:
 
 ```text
-2+3*4 = 14
+2 + 3 * 4 = 14
 ```
 
 ---
 
-# Lab 2 - Docker Containerization and Deployment
+# Lab 2 - Docker Containerization
 
 ## Objective
 
-The objective of Lab 2 is to containerize the calculator application and automate its deployment using Docker.
+The objective of Lab 2 is to containerize the application and automate image creation.
 
 ---
 
 ## Docker Virtual Machine
 
-A second Ubuntu VM is used as a dedicated Docker host.
+A dedicated Docker Server is deployed on:
 
-### Verify Docker Installation
+```text
+192.168.56.11
+```
+
+Verify Docker:
 
 ```bash
 docker --version
-```
-
-Example:
-
-```text
-Docker version 29.x.x
 ```
 
 ---
@@ -198,15 +240,15 @@ CMD ["node", "server.js"]
 
 ---
 
-## Build the Docker Image
+## Build Docker Image
 
-Navigate to the calculator application:
+Navigate to the application:
 
 ```bash
 cd app/calculator
 ```
 
-Build the image:
+Build image:
 
 ```bash
 docker build -t calculator-app:v5 .
@@ -214,7 +256,7 @@ docker build -t calculator-app:v5 .
 
 ---
 
-## Run the Container
+## Run Container
 
 ```bash
 docker run -d \
@@ -223,23 +265,13 @@ docker run -d \
 calculator-app:v5
 ```
 
-Verify:
+---
+
+## Verify
 
 ```bash
 docker ps
 ```
-
----
-
-## Test the Application
-
-Browser:
-
-```text
-http://localhost:3000
-```
-
-Command line:
 
 ```bash
 curl localhost:3000
@@ -247,25 +279,9 @@ curl localhost:3000
 
 ---
 
-## Container Inspection
+# Docker Hub Integration
 
-View logs:
-
-```bash
-docker logs calculator
-```
-
-Access container shell:
-
-```bash
-docker exec -it calculator bash
-```
-
----
-
-# Docker Hub
-
-The image has been published on Docker Hub.
+Docker images are automatically pushed to Docker Hub.
 
 Repository:
 
@@ -273,13 +289,7 @@ Repository:
 juninhoh/calculator-app
 ```
 
-Tag:
-
-```text
-v1
-```
-
-Docker Hub URL:
+Docker Hub:
 
 ```text
 https://hub.docker.com/r/juninhoh/calculator-app
@@ -287,116 +297,36 @@ https://hub.docker.com/r/juninhoh/calculator-app
 
 ---
 
-## Pull the Image
+## Image Versioning
 
-```bash
-docker pull juninhoh/calculator-app:v1
+Each pipeline execution creates a new version using:
+
+```text
+${BUILD_NUMBER}
+```
+
+Examples:
+
+```text
+calculator-app:24
+calculator-app:25
+calculator-app:26
 ```
 
 ---
 
-## Run the Published Image
+# Automated Docker Push
 
-```bash
-docker run -d \
---name calculator-prod \
--p 3001:3000 \
-juninhoh/calculator-app:v1
-```
+Jenkins automatically:
 
----
-
-# Docker Remote API
-
-Docker exposes a Remote API that allows Jenkins to manage containers remotely.
-
-Docker Server:
-
-```text
-192.168.56.11
-```
-
-Docker API Endpoint:
-
-```text
-http://192.168.56.11:2375
-```
-
-Verify connectivity:
-
-```bash
-curl http://192.168.56.11:2375/version
-```
-
----
-
-# Jenkins and Docker Integration
-
-Jenkins communicates with Docker through the Remote API.
-
-Jenkins Server:
-
-```text
-192.168.56.10
-```
-
-Docker Server:
-
-```text
-192.168.56.11
-```
-
-This integration allows Jenkins to:
-
-* Create containers remotely
-* Start containers remotely
-* Deploy applications remotely
-* Delete temporary containers automatically
-
----
-
-# Dynamic Build Agent
-
-When a pipeline is executed, Jenkins creates a temporary Docker container.
+1. Builds the image
+2. Logs in to Docker Hub
+3. Pushes the image
 
 Example:
 
 ```bash
-curl -X POST \
--H "Content-Type: application/json" \
--d '{
-  "Image":"node:22",
-  "Cmd":["node","--version"]
-}' \
-http://192.168.56.11:2375/containers/create?name=build-agent
-```
-
-The container is automatically deleted after the build.
-
----
-
-# Automated Deployment
-
-The application is automatically deployed as:
-
-```text
-calculator-prod
-```
-
-Deployment port:
-
-```text
-3001
-```
-
-Verification:
-
-```bash
-docker ps
-```
-
-```bash
-curl http://localhost:3001
+docker push juninhoh/calculator-app:${BUILD_NUMBER}
 ```
 
 ---
@@ -405,34 +335,40 @@ curl http://localhost:3001
 
 ## Objective
 
-The objective of Lab 3 is to automate server configuration and service deployment using Ansible.
+The objective of Lab 3 is to automate infrastructure configuration and application deployment.
 
-The Jenkins server acts as the Ansible Control Node and manages the Docker server remotely through SSH.
+The Jenkins VM acts as the Ansible Control Node.
 
 ---
 
-## Ansible Architecture
+# Ansible Architecture
 
 Jenkins Server (Control Node)
+
 ↓
+
 Ansible
+
 ↓
+
 SSH
+
 ↓
+
 Docker Server (Managed Node)
 
 ---
 
 ## Inventory
 
-Inventory file:
-
 ```ini
 [docker]
 192.168.56.11 ansible_user=vagrant
 ```
 
-Verify connectivity:
+---
+
+## Connectivity Test
 
 ```bash
 ansible all -i inventory -m ping
@@ -446,17 +382,15 @@ pong
 
 ---
 
-## Package Management
+# Package Management
 
-### Install Package
-
-Playbook:
+## Install Package
 
 ```yaml
 ---
 - name: Install system package
-  hosts: docker
-  become: yes
+  hosts: all
+  become: true
 
   tasks:
     - name: Install htop
@@ -466,7 +400,7 @@ Playbook:
         update_cache: yes
 ```
 
-Execution:
+Run:
 
 ```bash
 ansible-playbook -i inventory install_package.yml
@@ -474,7 +408,7 @@ ansible-playbook -i inventory install_package.yml
 
 ---
 
-### Remove Package Using Tags
+## Remove Package
 
 ```bash
 ansible-playbook -i inventory package_management.yml --tags remove
@@ -482,23 +416,21 @@ ansible-playbook -i inventory package_management.yml --tags remove
 
 ---
 
-## Nginx Deployment
+# Nginx Deployment
 
 Playbook:
 
 ```yaml
 ---
 - name: Install Nginx
-  hosts: docker
-  become: yes
+  hosts: all
+  become: true
 
   tasks:
-
     - name: Install nginx
       apt:
         name: nginx
         state: present
-        update_cache: yes
 
     - name: Start nginx
       service:
@@ -513,7 +445,7 @@ Deploy:
 ansible-playbook -i inventory nginx.yml
 ```
 
-Verification:
+Verify:
 
 ```bash
 systemctl status nginx
@@ -523,44 +455,59 @@ systemctl status nginx
 curl localhost
 ```
 
-Expected output:
+---
 
-```text
-Welcome to nginx!
+# Automated Application Deployment
+
+Deployment is handled through Ansible.
+
+Playbook:
+
+```yaml
+---
+- name: Deploy Calculator Application
+  hosts: all
+  become: true
+
+  tasks:
+
+    - name: Pull Docker image
+      shell: docker pull juninhoh/calculator-app:{{ version }}
+
+    - name: Stop old container
+      shell: docker rm -f calculator-prod || true
+
+    - name: Start new container
+      shell: |
+        docker run -d \
+        --name calculator-prod \
+        -p 3001:3000 \
+        juninhoh/calculator-app:{{ version }}
 ```
 
 ---
 
 # Jenkins and Ansible Integration
 
-The Jenkins pipeline automatically executes an Ansible playbook during deployment.
+Jenkins automatically executes:
 
-Added pipeline stage:
-
-```groovy
-stage('Run Ansible Playbook') {
-    steps {
-        sh '''
-        ansible-playbook \
-        -i ansible/inventory \
-        ansible/nginx.yml
-        '''
-    }
-}
+```bash
+ansible-playbook \
+-i ansible/inventory \
+ansible/deploy.yml \
+-e version=${BUILD_NUMBER}
 ```
 
 ---
 
 # Final Jenkins Pipeline
 
-1. Checkout
-2. Install Dependencies
-3. Run Tests
-4. Docker Remote API
-5. Create Build Container
-6. Deploy Application
-7. Run Ansible Playbook
-8. Delete Build Container
+1. Build & Test
+2. Build Docker Image
+3. Docker Login
+4. Push Image
+5. Deploy
+6. List Images
 
 ---
 
@@ -568,62 +515,85 @@ stage('Run Ansible Playbook') {
 
 When a build is triggered:
 
-1. Jenkins downloads the source code.
-2. Dependencies are installed.
-3. Automated tests are executed.
-4. Jenkins connects to Docker through the Remote API.
-5. A temporary build-agent container is created.
-6. The application is deployed as calculator-prod.
-7. Ansible configures the Docker server.
-8. Nginx is verified and started.
-9. The build-agent container is removed.
-10. The production container remains running.
+1. Jenkins creates a Docker Agent
+2. Dependencies are installed
+3. Automated tests are executed
+4. A Docker image is built
+5. The image is tagged using BUILD_NUMBER
+6. Jenkins logs in to Docker Hub
+7. The image is pushed to Docker Hub
+8. Ansible pulls the image on the Docker Server
+9. The previous container is removed
+10. The new version is deployed automatically
 
 ---
 
 # Final Infrastructure
 
 Developer
+
 ↓
+
 GitHub Repository
+
 ↓
+
 Jenkins VM (192.168.56.10)
-↓
-Pipeline Execution
-↓
-Docker Remote API + Ansible
-↓
-Docker VM (192.168.56.11)
 
-├── build-agent (temporary)
+↓
 
-├── calculator-prod (production)
+Docker Agent (node:22)
 
-└── nginx (managed automatically)
+↓
+
+Build & Test
+
+↓
+
+Docker Build
+
+↓
+
+Docker Hub
+
+↓
+
+Ansible Deployment
+
+↓
+
+Docker Server (192.168.56.11)
+
+├── calculator-prod
+
+└── nginx
 
 ---
 
 # Results
 
-The complete DevOps platform successfully provides:
+The platform successfully provides:
 
 * Continuous Integration with Jenkins
+* Docker-based Build Agents
 * Automated Testing
-* Docker Containerization
-* Docker Remote API Management
-* Dynamic Build Agents
-* Automated Deployment
-* Configuration Management with Ansible
-* Automated Nginx Deployment
+* Docker Image Build
+* Docker Hub Integration
+* Continuous Deployment with Ansible
+* Automated Container Replacement
 * Infrastructure Automation
 
-Production Application:
+---
+
+# Production Application
 
 ```text
 http://192.168.56.11:3001
 ```
 
-Nginx Service:
+---
+
+# Nginx Service
 
 ```text
 http://192.168.56.11

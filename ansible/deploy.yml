@@ -1,0 +1,19 @@
+---
+- name: Deploy Calculator Application
+  hosts: all
+  become: true
+
+  tasks:
+
+    - name: Pull Docker image
+      shell: docker pull juninhoh/calculator-app:{{ version }}
+
+    - name: Stop old container
+      shell: docker rm -f calculator-prod || true
+
+    - name: Start new container
+      shell: |
+        docker run -d \
+        --name calculator-prod \
+        -p 3001:3000 \
+        juninhoh/calculator-app:{{ version }}

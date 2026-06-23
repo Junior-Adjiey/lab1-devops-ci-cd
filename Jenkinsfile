@@ -1,94 +1,108 @@
 pipeline {
-    agent any
+
+    agent none
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/Junior-Adjiey/lab1-devops-ci-cd.git'
-            }
-        }
+        stage('Build & Test') {
 
-        stage('Install Dependencies') {
-            steps {
-                dir('app/calculator') {
-                    sh 'npm install'
+            agent {
+                docker {
+                    image 'node:22'
                 }
             }
-        }
 
-        stage('Run Tests') {
             steps {
+
+                git branch: 'main',
+                    url: 'https://github.com/Junior-Adjiey/lab1-devops-ci-cd.git'
+
                 dir('app/calculator') {
+                    sh 'npm install'
                     sh 'npm test'
                 }
             }
         }
 
-        stage('Docker Remote API') {
+        stage('Build Docker Image') {
+
+            agent any
+
             steps {
-                sh 'curl http://192.168.56.11:2375/version'
-            }
-        }
 
-        stage('Create Build Container') {
-            steps {
-                sh '''
-                curl -X POST \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "Image":"node:22",
-                  "Cmd":["node","--version"]
-                }' \
-                http://192.168.56.11:2375/containers/create?name=build-agent
+                dir('app/calculator') {
 
-                curl -X POST \
-                http://192.168.56.11:2375/containers/build-agent/start
-                '''
-            }
-        }
+                    sh '''
+                    docker build \
+                    -t calculator-app:${BUILD_NUMBER} .
+                    '''
 
-        stage('Deploy Application') {
-            steps {
-                sh '''
-                curl -X DELETE \
-                http://192.168.56.11:2375/containers/calculator-prod?force=true || true
-
-                curl -X POST \
-                -H "Content-Type: application/json" \
-                -d '{
-                "Image":"juninhoh/calculator-app:v1",
-                "HostConfig":{
-                    "PortBindings":{
-                    "3000/tcp":[{"HostPort":"3001"}]
-                    }
                 }
-                }' \
-                http://192.168.56.11:2375/containers/create?name=calculator-prod
+            }
+        }
 
-                curl -X POST \
-                http://192.168.56.11:2375/containers/calculator-prod/start
+        stage('Docker Login') {
+
+            agent any
+
+            steps {
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login \
+                    -u "$DOCKER_USER" \
+                    --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Image') {
+
+            agent any
+
+            steps {
+
+                sh '''
+                docker tag \
+                calculator-app:${BUILD_NUMBER} \
+                juninhoh/calculator-app:${BUILD_NUMBER}
+
+                docker push \
+                juninhoh/calculator-app:${BUILD_NUMBER}
                 '''
             }
         }
 
-        stage('Run Ansible Playbook') {
+        stage('Deploy') {
+
+            agent any
+
             steps {
+
                 sh '''
                 ansible-playbook \
                 -i ansible/inventory \
-                ansible/nginx.yml
+                ansible/deploy.yml \
+                -e version=${BUILD_NUMBER}
                 '''
             }
         }
 
-        stage('Delete Build Container') {
+        stage('List Images') {
+
+            agent any
+
             steps {
-                sh '''
-                curl -X DELETE \
-                http://192.168.56.11:2375/containers/build-agent?force=true
-                '''
+
+                sh 'docker images'
             }
         }
     }
