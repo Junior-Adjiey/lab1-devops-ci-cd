@@ -41,6 +41,46 @@ pipeline {
             }
         }
 
+        stage('Docker Login') {
+
+            agent any
+
+            steps {
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login \
+                    -u "$DOCKER_USER" \
+                    --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Image') {
+
+            agent any
+
+            steps {
+
+                sh '''
+                docker tag \
+                calculator-app:${BUILD_NUMBER} \
+                juninhoh/calculator-app:${BUILD_NUMBER}
+
+                docker push \
+                juninhoh/calculator-app:${BUILD_NUMBER}
+                '''
+            }
+        }
+
         stage('List Images') {
 
             agent any
