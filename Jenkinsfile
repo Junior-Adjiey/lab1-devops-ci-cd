@@ -130,7 +130,7 @@ pipeline {
                 -d '{
                     "content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."
                 }' \
-                "TON_WEBHOOK_DISCORD"
+                "https://discordapp.com/api/webhooks/1519110172318892032/0BizcGBYwEUlvYB-IFbnyM4c4XUEngKZAKWPCFGHyixX9RpYjudcK_o35ARQA2N2y4rG"
                 '''
             }
 
@@ -142,7 +142,7 @@ pipeline {
                 -d '{
                     "content":"❌ Jenkins Build #${BUILD_NUMBER} failed."
                 }' \
-                "TON_WEBHOOK_DISCORD"
+                "https://discordapp.com/api/webhooks/1519110172318892032/0BizcGBYwEUlvYB-IFbnyM4c4XUEngKZAKWPCFGHyixX9RpYjudcK_o35ARQA2N2y4rG"
                 '''
             }
         }
