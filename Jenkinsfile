@@ -125,37 +125,43 @@ pipeline {
 
         success {
 
-            withCredentials([
-                string(
-                    credentialsId: 'discord-webhook',
-                    variable: 'DISCORD_WEBHOOK'
-                )
-            ]) {
+            node {
 
-                sh '''
-                curl -H "Content-Type: application/json" \
-                -X POST \
-                -d '{"content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."}' \
-                "$DISCORD_WEBHOOK"
-                '''
+                withCredentials([
+                    string(
+                        credentialsId: 'discord-webhook',
+                        variable: 'DISCORD_WEBHOOK'
+                    )
+                ]) {
+
+                    sh '''
+                    curl -H "Content-Type: application/json" \
+                    -X POST \
+                    -d '{"content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."}' \
+                    "$DISCORD_WEBHOOK"
+                    '''
+                }
             }
         }
 
         failure {
 
-            withCredentials([
-                string(
-                    credentialsId: 'discord-webhook',
-                    variable: 'DISCORD_WEBHOOK'
-                )
-            ]) {
+            node {
 
-                sh '''
-                curl -H "Content-Type: application/json" \
-                -X POST \
-                -d '{"content":"❌ Jenkins Build #${BUILD_NUMBER} failed."}' \
-                "$DISCORD_WEBHOOK"
-                '''
+                withCredentials([
+                    string(
+                        credentialsId: 'discord-webhook',
+                        variable: 'DISCORD_WEBHOOK'
+                    )
+                ]) {
+
+                    sh '''
+                    curl -H "Content-Type: application/json" \
+                    -X POST \
+                    -d '{"content":"❌ Jenkins Build #${BUILD_NUMBER} failed."}' \
+                    "$DISCORD_WEBHOOK"
+                    '''
+                }
             }
         }
     }
