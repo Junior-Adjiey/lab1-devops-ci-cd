@@ -30,21 +30,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
-                dir('app/calculator') {
-                    sh '''
-                    docker build \
-                    -t juninhoh/calculator-app:${BUILD_NUMBER} .
-                    '''
-                }
-            }
-        }
-        stage('List Images') {
-            steps {
-                sh 'docker images'
-            }
-        }
     }
 }
