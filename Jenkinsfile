@@ -96,6 +96,20 @@ pipeline {
             }
         }
 
+        stage('Verify Deployment') {
+
+            agent any
+
+            steps {
+
+                sh '''
+                curl -f http://192.168.56.11:3001 > /dev/null
+
+                echo "Application successfully deployed"
+                '''
+            }
+        }
+
         stage('List Images') {
 
             agent any
