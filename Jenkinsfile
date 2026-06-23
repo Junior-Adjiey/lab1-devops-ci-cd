@@ -5,7 +5,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'junior',
+                git branch: 'Lucie',
                     url: 'https://github.com/Junior-Adjiey/lab1-devops-ci-cd.git'
             }
         }
