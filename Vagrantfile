@@ -3,47 +3,63 @@
 
 Vagrant.configure("2") do |config|
 
-  # Ubuntu 22.04 LTS
-  config.vm.box = "ubuntu/jammy64"
+  ############################################
+  # VM 1 : Jenkins Server (Lab 1)
+  ############################################
+  config.vm.define "jenkins" do |jenkins|
+    jenkins.vm.box = "ubuntu/jammy64"
+    jenkins.vm.hostname = "jenkins-server"
 
-  # Nom de la machine virtuelle
-  config.vm.hostname = "jenkins-server"
+    # Ports Jenkins + Calculator
+    jenkins.vm.network "forwarded_port", guest: 8080, host: 8080
+    jenkins.vm.network "forwarded_port", guest: 3000, host: 3000
 
-  # Port Jenkins
-  config.vm.network "forwarded_port", guest: 8080, host: 8080
+    # SSH
+    jenkins.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh"
 
-  # Application Calculator
-  config.vm.network "forwarded_port", guest: 3000, host: 3000
+    # Shared folder
+    jenkins.vm.synced_folder ".", "/vagrant"
 
-  # Port SSH
-  config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh"
+    # VirtualBox config
+    jenkins.vm.provider "virtualbox" do |vb|
+      vb.name = "Lab1-Jenkins"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
 
-  # Dossier partagé
-  config.vm.synced_folder ".", "/vagrant"
-
-  # Configuration VirtualBox
-  config.vm.provider "virtualbox" do |vb|
-    vb.name = "Lab1-Jenkins"
-    vb.memory = "4096"
-    vb.cpus = 2
+    # Provisioning
+    jenkins.vm.provision "shell", inline: <<-SHELL
+      apt-get update -y
+      apt-get install -y openjdk-21-jre git curl wget net-tools
+      echo "Jenkins VM ready"
+    SHELL
   end
 
-  # Provisioning automatique
-  config.vm.provision "shell", inline: <<-SHELL
 
-    apt-get update
+  ############################################
+  # VM 2 : Docker Server (Lab 2)
+  ############################################
+  config.vm.define "docker" do |docker|
+    docker.vm.box = "ubuntu/jammy64"
+    docker.vm.hostname = "docker-server"
 
-    # Java 21
-    apt-get install -y openjdk-21-jre
+    # IP privée pour Docker Remote API
+    docker.vm.network "private_network", ip: "192.168.56.11"
 
-    # Git
-    apt-get install -y git
+    docker.vm.provider "virtualbox" do |vb|
+      vb.name = "Lab2-Docker"
+      vb.memory = 2048
+      vb.cpus = 2
+    end
 
-    # Outils utiles
-    apt-get install -y curl wget net-tools
-
-    echo "Environment ready"
-
-  SHELL
+    docker.vm.provision "shell", inline: <<-SHELL
+      apt-get update -y
+      apt-get install -y docker.io
+      systemctl enable docker
+      systemctl start docker
+      usermod -aG docker vagrant
+      echo "Docker VM ready"
+    SHELL
+  end
 
 end
