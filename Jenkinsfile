@@ -119,5 +119,32 @@ pipeline {
                 sh 'docker images'
             }
         }
+
+        post {
+
+            success {
+
+                sh '''
+                curl -H "Content-Type: application/json" \
+                -X POST \
+                -d '{
+                    "content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."
+                }' \
+                "TON_WEBHOOK_DISCORD"
+                '''
+            }
+
+            failure {
+
+                sh '''
+                curl -H "Content-Type: application/json" \
+                -X POST \
+                -d '{
+                    "content":"❌ Jenkins Build #${BUILD_NUMBER} failed."
+                }' \
+                "TON_WEBHOOK_DISCORD"
+                '''
+            }
+        }
     }
 }
