@@ -19,5 +19,5 @@ app.get('/calculate', (req, res) => {
 })
 
 app.listen(3000, () => {
-  console.log('Calculator running on port 3000')
-})
+    console.log("Calculator running on port 3000");
+});
