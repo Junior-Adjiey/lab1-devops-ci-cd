@@ -119,30 +119,42 @@ pipeline {
                 sh 'docker images'
             }
         }
+    }
 
-        post {
+    post {
 
-            success {
+        success {
+
+            withCredentials([
+                string(
+                    credentialsId: 'discord-webhook',
+                    variable: 'DISCORD_WEBHOOK'
+                )
+            ]) {
 
                 sh '''
                 curl -H "Content-Type: application/json" \
                 -X POST \
-                -d '{
-                    "content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."
-                }' \
-                "https://discordapp.com/api/webhooks/1519110172318892032/0BizcGBYwEUlvYB-IFbnyM4c4XUEngKZAKWPCFGHyixX9RpYjudcK_o35ARQA2N2y4rG"
+                -d '{"content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."}' \
+                "$DISCORD_WEBHOOK"
                 '''
             }
+        }
 
-            failure {
+        failure {
+
+            withCredentials([
+                string(
+                    credentialsId: 'discord-webhook',
+                    variable: 'DISCORD_WEBHOOK'
+                )
+            ]) {
 
                 sh '''
                 curl -H "Content-Type: application/json" \
                 -X POST \
-                -d '{
-                    "content":"❌ Jenkins Build #${BUILD_NUMBER} failed."
-                }' \
-                "https://discordapp.com/api/webhooks/1519110172318892032/0BizcGBYwEUlvYB-IFbnyM4c4XUEngKZAKWPCFGHyixX9RpYjudcK_o35ARQA2N2y4rG"
+                -d '{"content":"❌ Jenkins Build #${BUILD_NUMBER} failed."}' \
+                "$DISCORD_WEBHOOK"
                 '''
             }
         }
