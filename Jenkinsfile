@@ -125,7 +125,7 @@ pipeline {
 
         success {
 
-            node {
+            script {
 
                 withCredentials([
                     string(
@@ -137,7 +137,7 @@ pipeline {
                     sh '''
                     curl -H "Content-Type: application/json" \
                     -X POST \
-                    -d '{"content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."}' \
+                    -d '{"content":"✅ Build #${BUILD_NUMBER} SUCCESS"}' \
                     "$DISCORD_WEBHOOK"
                     '''
                 }
@@ -146,7 +146,7 @@ pipeline {
 
         failure {
 
-            node {
+            script {
 
                 withCredentials([
                     string(
@@ -158,7 +158,7 @@ pipeline {
                     sh '''
                     curl -H "Content-Type: application/json" \
                     -X POST \
-                    -d '{"content":"❌ Jenkins Build #${BUILD_NUMBER} failed."}' \
+                    -d '{"content":"❌ Build #${BUILD_NUMBER} FAILURE"}' \
                     "$DISCORD_WEBHOOK"
                     '''
                 }
