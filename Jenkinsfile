@@ -81,6 +81,21 @@ pipeline {
             }
         }
 
+        stage('Deploy') {
+
+            agent any
+
+            steps {
+
+                sh '''
+                ansible-playbook \
+                -i ansible/inventory \
+                ansible/deploy.yml \
+                -e version=${BUILD_NUMBER}
+                '''
+            }
+        }
+
         stage('List Images') {
 
             agent any
