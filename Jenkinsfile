@@ -120,7 +120,7 @@ pipeline {
             }
         }
 
-        stage('Discord Notification') {
+        stage('Discord Success Notification') {
 
             agent any
 
@@ -133,12 +133,12 @@ pipeline {
                     )
                 ]) {
 
-                    sh '''
+                    sh """
                     curl -H "Content-Type: application/json" \
                     -X POST \
                     -d '{"content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."}' \
                     "$DISCORD_WEBHOOK"
-                    '''
+                    """
                 }
             }
         }
