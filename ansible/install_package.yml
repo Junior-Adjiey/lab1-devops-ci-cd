@@ -1,0 +1,11 @@
+---
+- name: Install system package
+  hosts: docker
+  become: yes
+
+  tasks:
+    - name: Install htop
+      apt:
+        name: htop
+        state: present
+        update_cache: yes

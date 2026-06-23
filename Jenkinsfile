@@ -73,6 +73,16 @@ pipeline {
             }
         }
 
+        stage('Run Ansible Playbook') {
+            steps {
+                sh '''
+                ansible-playbook \
+                -i ansible/inventory \
+                ansible/nginx.yml
+                '''
+            }
+        }
+
         stage('Delete Build Container') {
             steps {
                 sh '''
