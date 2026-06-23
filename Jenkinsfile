@@ -119,34 +119,12 @@ pipeline {
                 sh 'docker images'
             }
         }
-    }
 
-    post {
+        stage('Discord Notification') {
 
-        success {
+            agent any
 
-            script {
-
-                withCredentials([
-                    string(
-                        credentialsId: 'discord-webhook',
-                        variable: 'DISCORD_WEBHOOK'
-                    )
-                ]) {
-
-                    sh '''
-                    curl -H "Content-Type: application/json" \
-                    -X POST \
-                    -d '{"content":"✅ Build #${BUILD_NUMBER} SUCCESS"}' \
-                    "$DISCORD_WEBHOOK"
-                    '''
-                }
-            }
-        }
-
-        failure {
-
-            script {
+            steps {
 
                 withCredentials([
                     string(
@@ -158,7 +136,7 @@ pipeline {
                     sh '''
                     curl -H "Content-Type: application/json" \
                     -X POST \
-                    -d '{"content":"❌ Build #${BUILD_NUMBER} FAILURE"}' \
+                    -d '{"content":"✅ Jenkins Build #${BUILD_NUMBER} succeeded and application deployed successfully."}' \
                     "$DISCORD_WEBHOOK"
                     '''
                 }
