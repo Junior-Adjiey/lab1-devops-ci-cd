@@ -49,6 +49,30 @@ pipeline {
             }
         }
 
+        stage('Deploy Application') {
+            steps {
+                sh '''
+                curl -X DELETE \
+                http://192.168.56.11:2375/containers/calculator-prod?force=true || true
+
+                curl -X POST \
+                -H "Content-Type: application/json" \
+                -d '{
+                "Image":"juninhoh/calculator-app:v1",
+                "HostConfig":{
+                    "PortBindings":{
+                    "3000/tcp":[{"HostPort":"3001"}]
+                    }
+                }
+                }' \
+                http://192.168.56.11:2375/containers/create?name=calculator-prod
+
+                curl -X POST \
+                http://192.168.56.11:2375/containers/calculator-prod/start
+                '''
+            }
+        }
+
         stage('Delete Build Container') {
             steps {
                 sh '''
