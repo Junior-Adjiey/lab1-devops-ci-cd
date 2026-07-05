@@ -1,264 +1,201 @@
-# Lab 1 & Lab 2 - CI/CD Pipeline and Docker Containerization
+# 🚀 DevOps CI/CD Platform
 
-## Objective
-
-The objective of these labs is to build a basic DevOps environment using:
-
-* Vagrant
-* VirtualBox
-* Ubuntu 22.04
-* GitHub
-* Jenkins
-* Docker
-* Docker Hub
+A complete DevOps platform demonstrating **Continuous Integration (CI)**, **Continuous Deployment (CD)** and **Infrastructure Automation** using **Jenkins**, **Docker**, **Docker Hub**, **Ansible**, **Vagrant** and **Ubuntu**.
 
 ---
 
-## Architecture
+# 📋 Table of Contents
+
+- Overview
+- Features
+- Technologies
+- Architecture
+- Repository Structure
+- Getting Started
+- Jenkins Pipeline
+- Deployment Workflow
+- Team
+
+---
+
+# 📖 Overview
+
+This project was developed as part of the DevOps laboratory sessions.
+
+The objective is to build a complete CI/CD platform capable of automatically:
+
+- retrieving the latest source code from GitHub;
+- building and testing the application;
+- creating a Docker image;
+- publishing the image to Docker Hub;
+- deploying the application automatically on a production server using Ansible;
+- verifying the deployment.
+
+The infrastructure consists of two Ubuntu virtual machines:
+
+- **VM1** hosts Jenkins and all CI/CD services.
+- **VM2** hosts Docker and runs the production application.
+
+---
+
+# ✨ Features
+
+- ✅ Continuous Integration with Jenkins
+- ✅ Docker-based Build Agent
+- ✅ Automated Testing
+- ✅ Docker Image Creation
+- ✅ Docker Image Versioning
+- ✅ Docker Hub Integration
+- ✅ Continuous Deployment with Ansible
+- ✅ Infrastructure as Code
+- ✅ Deployment Verification
+- ✅ Discord Build Notifications
+
+---
+
+# 🛠 Technologies
+
+| Technology | Purpose |
+|------------|----------|
+| Jenkins | Continuous Integration and Continuous Deployment |
+| Docker | Application Containerization |
+| Docker Hub | Docker Image Registry |
+| Ansible | Automated Deployment |
+| Vagrant | Virtual Machine Provisioning |
+| Ubuntu 22.04 | Operating System |
+| GitHub | Source Code Management |
+| Node.js | Calculator Application Runtime |
+
+---
+
+# 🏗 Architecture
+
+The Proof of Concept is based on a two-server architecture.
+
+- **VM1** is dedicated to Continuous Integration.
+- **VM2** is dedicated to application deployment.
+
+Insert **Figure 1 – Overall Architecture** here.
+
+---
+
+# 📂 Repository Structure
 
 ```text
-Developer
-    ↓
-GitHub Repository
-    ↓
-Jenkins
-    ↓
-Build
-    ↓
-Test
-    ↓
-Docker Build
-    ↓
-Docker Hub
-    ↓
-Deploy
+.
+├── Jenkinsfile
+├── README.md
+├── Vagrantfile
+├── ansible
+│   ├── deploy.yml
+│   ├── inventory
+│   ├── nginx.yml
+│   ├── install_package.yml
+│   └── package_management.yml
+│
+├── app
+│   └── calculator
+│       ├── Dockerfile
+│       ├── package.json
+│       ├── server.js
+│       ├── public
+│       └── test
+│
+└── scripts
 ```
 
 ---
 
-## Branch Strategy
+# 🚀 Getting Started
 
-The repository uses a feature branch workflow.
+## Clone the Repository
 
-### Main Branch
+```bash
+git clone https://github.com/Junior-Adjiey/lab1-devops-ci-cd.git
 
-* `main`
-* Protected branch
-* Pull Requests required before merging
-
-### Team Branches
-
-* `blaina`
-* `junior`
-* `loriana`
-* `lucie`
-* `yorgo-haykal`
-
-Each member works on their own branch and submits Pull Requests before merging into `main`.
+cd lab1-devops-ci-cd
+```
 
 ---
 
-# Lab 1 - Jenkins CI Pipeline
-
-## Virtual Environment
-
-The project uses Vagrant and VirtualBox to create a reproducible Ubuntu environment.
-
-### Start the Jenkins VM
+## Start the Virtual Machines
 
 ```bash
 vagrant up
 ```
 
-### Connect to the VM
+---
+
+## Connect to Jenkins VM
 
 ```bash
-vagrant ssh
-```
-
-### Stop the VM
-
-```bash
-vagrant halt
-```
-
-### Destroy the VM
-
-```bash
-vagrant destroy
+vagrant ssh jenkins-server
 ```
 
 ---
 
-## Installed Tools
+## Connect to Docker VM
 
-The Jenkins VM automatically installs:
-
-* OpenJDK 21
-* Git
-* Curl
-* Wget
-* Net-tools
+```bash
+vagrant ssh docker-server
+```
 
 ---
 
-## Jenkins
+## Jenkins Access
 
-Jenkins is accessible through:
+Jenkins is available at:
 
 ```text
 http://localhost:8080
 ```
 
-Retrieve the initial administrator password:
+Retrieve the administrator password:
 
 ```bash
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
+---
+
+# ⚙️ Jenkins CI/CD Pipeline
+
+The CI/CD pipeline is fully automated using Jenkins.
+
+Each pipeline execution performs the following operations:
+
+1. Checkout the latest source code from GitHub
+2. Build the application inside a Docker build agent
+3. Execute automated tests
+4. Build a Docker image
+5. Authenticate with Docker Hub
+6. Push the versioned Docker image
+7. Deploy the application using Ansible
+8. Verify the deployment
+9. Send a Discord notification
+
+Insert **Figure 2 – Jenkins CI/CD Pipeline Workflow** here.
 
 ---
 
-## CI Pipeline
+# 🐳 Docker Image Versioning
 
-The Jenkins pipeline performs:
-
-1. Checkout source code from GitHub
-2. Install Node.js dependencies
-3. Run automated tests
-
-### Pipeline Stages
-
-* Checkout
-* Install Dependencies
-* Run Tests
-
----
-
-# Calculator Application
-
-The calculator can be accessed through:
-
-```text
-http://localhost:3000
-```
+Each successful pipeline execution creates a new Docker image tagged with the Jenkins build number.
 
 Example:
 
 ```text
-2+3*4 = 14
+juninhoh/calculator-app:38
+juninhoh/calculator-app:39
+juninhoh/calculator-app:40
 ```
+
+This strategy ensures traceability between Jenkins builds and Docker images while allowing previous versions to be redeployed if necessary.
 
 ---
 
-# Lab 2 - Docker Containerization
+# 📦 Docker Hub Integration
 
-## Objective
-
-The objective of Lab 2 is to containerize the calculator application using Docker and publish the image to Docker Hub.
-
----
-
-## Docker Virtual Machine
-
-A second VM is used as a dedicated Docker host.
-
-### Verify Docker Installation
-
-```bash
-docker --version
-```
-
-Example:
-
-```text
-Docker version 29.x.x
-```
-
----
-
-## Dockerfile
-
-```dockerfile
-FROM node:22
-
-WORKDIR /app
-
-COPY . .
-
-RUN npm install
-
-EXPOSE 3000
-
-CMD ["node", "server.js"]
-```
-
----
-
-## Build the Docker Image
-
-Navigate to the calculator application:
-
-```bash
-cd app/calculator
-```
-
-Build the image:
-
-```bash
-docker build -t calculator-app:v5 .
-```
-
----
-
-## Run the Container
-
-```bash
-docker run -d -p 3000:3000 --name calculator calculator-app:v5
-```
-
-Verify that the container is running:
-
-```bash
-docker ps
-```
-
----
-
-## Test the Application
-
-Using a browser:
-
-```text
-http://localhost:3000
-```
-
-Using curl:
-
-```bash
-curl localhost:3000
-```
-
----
-
-## Container Inspection
-
-View container logs:
-
-```bash
-docker logs calculator
-```
-
-Access the container shell:
-
-```bash
-docker exec -it calculator bash
-```
-
----
-
-## Docker Hub
-
-The image has been published on Docker Hub.
+The Docker images are automatically published to Docker Hub after each successful build.
 
 Repository:
 
@@ -266,76 +203,83 @@ Repository:
 juninhoh/calculator-app
 ```
 
-Tag:
+The production server always pulls the latest validated version before deployment.
+
+---
+
+# 🚀 Automated Deployment
+
+Application deployment is fully automated using Ansible.
+
+The deployment playbook performs the following actions:
+
+- Pull the latest Docker image from Docker Hub
+- Stop the currently running container (if any)
+- Remove the previous container
+- Start a new production container
+- Expose the application on port **3001**
+
+Insert **Figure 3 – Automated Deployment Workflow** here.
+
+---
+
+# 📋 Deployment Verification
+
+After deployment, Jenkins automatically verifies that the application is available by sending an HTTP request to the production server.
+
+If the verification succeeds, the pipeline finishes successfully and a notification is sent to Discord.
+
+---
+
+# 📊 Project Workflow
 
 ```text
-v1
-```
-
-### Pull the Image
-
-```bash
-docker pull juninhoh/calculator-app:v1
-```
-
-### Run the Published Image
-
-```bash
-docker run -d -p 3000:3000 juninhoh/calculator-app:v1
-```
-
----
-
-## Useful Docker Commands
-
-### List Images
-
-```bash
-docker images
-```
-
-### List Running Containers
-
-```bash
-docker ps
-```
-
-### List All Containers
-
-```bash
-docker ps -a
-```
-
-### Stop a Container
-
-```bash
-docker stop calculator
-```
-
-### Remove a Container
-
-```bash
-docker rm calculator
-```
-
-### Remove an Image
-
-```bash
-docker rmi calculator-app:v5
+Developer
+    │
+git push
+    │
+GitHub Repository
+    │
+Webhook
+    │
+Jenkins Pipeline
+    │
+Docker Build Agent
+    │
+Automated Tests
+    │
+Docker Image
+    │
+Docker Hub
+    │
+Ansible Deployment
+    │
+Docker Server
+    │
+Calculator Application
 ```
 
 ---
 
-## Docker Hub Repository
+# 📈 Project Highlights
 
-https://hub.docker.com/r/juninhoh/calculator-app
+- Automated CI/CD pipeline
+- Docker-based isolated build environment
+- Docker image versioning
+- Infrastructure as Code using Ansible
+- Automated production deployment
+- Deployment verification
+- Discord build notifications
+- Modular two-server architecture
 
 ---
 
-## Team Members
+# 👥 Team
 
-* Blaina NIANGI-KIAYUKUA
-* Koffi Jean-Luc Junior ADJIEY
-* Loriana RATOVO
-* Lucie MOREAU
-* Yorgo HAYKAL
+- Blaina NIANGI-KIAYUKUA
+- Koffi Jean-Luc Junior ADJIEY
+- Loriana RATOVO
+- Lucie MOREAU
+- Yorgo HAYKAL
+
+---
